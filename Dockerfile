@@ -21,8 +21,18 @@ RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/Allo
     && echo "UseCanonicalName Off" >> /etc/apache2/apache2.conf \
     && echo "UseCanonicalPhysicalPort Off" >> /etc/apache2/apache2.conf
 
-# Render / Cloud platforms bind to dynamic $PORT (default 80 or 10000)
-ENV PORT=80
+# Default Environment Variables for StayFlow
+ENV PORT=80 \
+    APP_ENV=production \
+    APP_NAME="StayFlow PG Management System" \
+    APP_URL="https://stayflow.antideploy.app" \
+    APP_DEBUG=false \
+    DB_HOST=127.0.0.1 \
+    DB_PORT=3306 \
+    DB_NAME=stayflow \
+    DB_USER=root \
+    DB_PASS="" \
+    DB_CHARSET=utf8mb4
 RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
 
 # Set work directory
