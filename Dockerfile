@@ -32,7 +32,14 @@ ENV PORT=80 \
     DB_NAME=stayflow \
     DB_USER=root \
     DB_PASS="" \
-    DB_CHARSET=utf8mb4
+    DB_CHARSET=utf8mb4 \
+    MAIL_HOST=localhost \
+    MAIL_PORT=587 \
+    MAIL_USERNAME="" \
+    MAIL_PASSWORD="" \
+    MAIL_ENCRYPTION=tls \
+    MAIL_FROM_ADDRESS=noreply@stayflow.antideploy.app \
+    MAIL_FROM_NAME="StayFlow"
 RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
 
 # Set work directory
