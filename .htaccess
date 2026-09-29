@@ -8,7 +8,8 @@ DirectoryIndex index.php index.html
   RewriteEngine On
   RewriteBase /
 
-  # 301: If requested directly via backend fly.dev domain, redirect immediately to public domain
+  # 301: If requested directly via backend fly.dev domain (and not proxied by antideploy), redirect
+  RewriteCond %{HTTP:X-Forwarded-Host} !antideploy\.app [NC]
   RewriteCond %{HTTP_HOST} (ad-stayflow-f6dc2abb\.fly\.dev|fly\.dev) [NC]
   RewriteRule ^(.*)$ https://stayflow.antideploy.app/$1 [R=301,L]
 
