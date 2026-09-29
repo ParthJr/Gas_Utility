@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+
+# Disallow Internal SaaS & Admin Areas
+Disallow: /super-admin/
+Disallow: /admin/
+Disallow: /resident/
+Disallow: /staff/
+Disallow: /api/
+Disallow: /pg-management-system/
+Disallow: /config/
+Disallow: /services/
+
+# Explicitly Allow Public Marketing, Content & Pricing
+Allow: /blog/
+Allow: /whitepaper/
+Allow: /whitepapers/
+Allow: /property-management-software-*.php
+Allow: /uploads/blogs/
+Allow: /uploads/whitepapers/
+
+Sitemap: https://stayflow.antideploy.app/sitemap.xml

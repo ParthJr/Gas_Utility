@@ -1,0 +1,60 @@
+# StayFlow PG SaaS — Production Apache Configuration (.htaccess)
+# Optimized for InfinityFree Shared Hosting & Apache 2.4+
+
+# 1. Prevent Directory Browsing
+Options -Indexes
+
+# 2. Enable Rewrite Engine & Clean Routing
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Enforce HTTPS on Production (InfinityFree / SSL domains)
+    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Clean alias routes
+    RewriteRule ^login/?$ login.php [L,QSA]
+    RewriteRule ^logout/?$ logout.php [L,QSA]
+    RewriteRule ^register/?$ signup.php [L,QSA]
+    RewriteRule ^signup/?$ signup.php [L,QSA]
+</IfModule>
+
+# 3. Block Direct Access to Sensitive Files (.env, .sql, database folder, git, logs)
+<FilesMatch "^(\.env|\.git|\.gitignore|.*\.sql|.*\.log|composer\.(json|lock)|package\.(json|lock)|README\.md)">
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+</FilesMatch>
+
+# 3b. Block Direct Access to Debug / Developer-Only PHP Files
+<FilesMatch "^(inspect_.*|test_.*|debug_.*|phpinfo\.php|info\.php|check_db\.php)$">
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+</FilesMatch>
+
+# 4. UTF-8 Encoding
+AddDefaultCharset UTF-8
+
+# 5. Security Headers (where mod_headers is available)
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# 6. Gzip Compression for Fast Loading
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>

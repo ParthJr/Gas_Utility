@@ -1,0 +1,100 @@
+# StayFlow - Apache / LiteSpeed cPanel Configuration
+# =======================================================
+
+# Set homepage
+DirectoryIndex index.php index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # 301: If requested directly via backend fly.dev domain, redirect immediately to public domain
+  RewriteCond %{HTTP_HOST} (ad-stayflow-f6dc2abb\.fly\.dev|fly\.dev) [NC]
+  RewriteRule ^(.*)$ https://stayflow.antideploy.app/$1 [R=301,L]
+
+  # 301: Redirect explicit /index.php to root /
+  RewriteCond %{HTTP:X-Forwarded-Host} !=""
+  RewriteCond %{THE_REQUEST} \s/+index\.php[\s?] [NC]
+  RewriteRule ^index\.php$ https://%{HTTP:X-Forwarded-Host}/ [R=301,L]
+
+  RewriteCond %{THE_REQUEST} \s/+index\.php[\s?] [NC]
+  RewriteRule ^index\.php$ / [R=301,L]
+
+  # 301: Old homepage property-management-software.php or .html -> /
+  RewriteCond %{THE_REQUEST} \s/+(property-management-software\.(html|php))[\s?] [NC]
+  RewriteRule ^ / [R=301,L]
+
+  # 301: Redirect .html requests to .php equivalent
+  RewriteCond %{THE_REQUEST} \s/+(.+)\.html[\s?] [NC]
+  RewriteRule ^ /%1.php [R=301,L]
+
+  # Dynamic XML Sitemap & Robots.txt
+  RewriteRule ^sitemap\.xml$ sitemap.php [L]
+  RewriteRule ^robots\.txt$ robots.php [L]
+
+  # Clean Blog, Whitepaper & Team URLs
+  RewriteRule ^blog/([a-zA-Z0-9_-]+)/?$ property-management-software-blog-details.php?slug=$1 [L,QSA]
+  RewriteRule ^whitepaper/([a-zA-Z0-9_-]+)/?$ property-management-software-whitepaper-details.php?slug=$1 [L,QSA]
+  RewriteRule ^whitepapers/([a-zA-Z0-9_-]+)/?$ property-management-software-whitepaper-details.php?slug=$1 [L,QSA]
+  RewriteRule ^team/([a-zA-Z0-9_-]+)/?$ property-management-software-team-details.php?slug=$1 [L,QSA]
+  RewriteRule ^team-details/([a-zA-Z0-9_-]+)/?$ property-management-software-team-details.php?slug=$1 [L,QSA]
+  RewriteRule ^blog/?$ property-management-software-blog.php [L,QSA]
+  RewriteRule ^whitepapers/?$ property-management-software-whitepaper.php [L,QSA]
+  RewriteRule ^team/?$ property-management-software-team.php [L,QSA]
+
+
+  # SaaS Direct Module & Auth Routing:
+  # Map root-level requests (/super-admin, /admin, /resident, /staff, /api, /onboarding, /login, etc.)
+  # directly to the real SaaS application folder (/pg-management-system/)
+  RewriteRule ^(super-admin|admin|resident|staff|api|onboarding|services|cron)(/.*)?$ pg-management-system/$1$2 [L,QSA]
+  RewriteRule ^(login|logout|signup|verify_otp|forgot_password|reset_password)(\.php)?$ pg-management-system/$1.php [L,QSA]
+
+  # Clean URL: allow accessing pages without .php extension
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME}.php -f
+  RewriteRule ^(.+)$ $1.php [L,QSA]
+
+</IfModule>
+
+# Security Headers
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set X-XSS-Protection "1; mode=block"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Disable directory listing
+Options -Indexes
+
+# UTF-8 encoding
+AddDefaultCharset UTF-8
+
+# Correct MIME types
+<IfModule mod_mime.c>
+  AddType application/javascript .js
+  AddType text/css .css
+  AddType image/svg+xml .svg
+  AddType font/woff2 .woff2
+  AddType font/woff .woff
+</IfModule>
+
+# Enable gzip compression
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css application/javascript application/json image/svg+xml
+</IfModule>
+
+# Browser caching
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/jpg "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType font/woff "access plus 1 year"
+</IfModule>

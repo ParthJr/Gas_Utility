@@ -1,0 +1,14 @@
+# Local environment
+.env
+.env.local
+
+# Logs and databases
+*.log
+*.sql
+*.zip
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
