@@ -1,16 +1,17 @@
 # Official PHP image with Apache
 FROM php:8.2-apache
 
-# Install required system libraries and PHP extensions (MySQL, GD, ZIP)
+# Install required system libraries and PHP extensions (MySQL, PostgreSQL/Supabase, GD, ZIP)
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
     libzip-dev \
+    libpq-dev \
     zip \
     unzip \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd mysqli pdo pdo_mysql zip \
+    && docker-php-ext-install -j$(nproc) gd mysqli pdo pdo_mysql pdo_pgsql pgsql zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Enable Apache mod_rewrite, headers and remoteip
@@ -21,7 +22,7 @@ RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/Allo
     && echo "UseCanonicalName Off" >> /etc/apache2/apache2.conf \
     && echo "UseCanonicalPhysicalPort Off" >> /etc/apache2/apache2.conf
 
-# Default Environment Variables for StayFlow
+# Default Environment Variables for StayFlow (including Supabase Connector)
 ENV PORT=80 \
     APP_ENV=production \
     APP_NAME="StayFlow PG Management System" \
@@ -39,7 +40,15 @@ ENV PORT=80 \
     MAIL_PASSWORD="" \
     MAIL_ENCRYPTION=tls \
     MAIL_FROM_ADDRESS=noreply@stayflow.antideploy.app \
-    MAIL_FROM_NAME="StayFlow"
+    MAIL_FROM_NAME="StayFlow" \
+    SUPABASE_URL="" \
+    SUPABASE_ANON_KEY="" \
+    SUPABASE_SERVICE_ROLE_KEY="" \
+    SUPABASE_DB_HOST="" \
+    SUPABASE_DB_PORT=6543 \
+    SUPABASE_DB_NAME="postgres" \
+    SUPABASE_DB_USER="postgres" \
+    SUPABASE_DB_PASS=""
 RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
 
 # Set work directory

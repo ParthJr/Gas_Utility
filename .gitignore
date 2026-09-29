@@ -5,6 +5,7 @@
 # Logs and databases
 *.log
 *.sql
+!supabase/migrations/*.sql
 *.zip
 
 # OS / Editor files

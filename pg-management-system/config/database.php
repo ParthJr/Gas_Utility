@@ -69,6 +69,13 @@ foreach ($possibleEnvPaths as $envPath) {
     }
 }
 
+// Load Supabase Connector Configuration
+if (file_exists(__DIR__ . '/../../config/supabase.php')) {
+    require_once __DIR__ . '/../../config/supabase.php';
+} elseif (file_exists(__DIR__ . '/../config/supabase.php')) {
+    require_once __DIR__ . '/../config/supabase.php';
+}
+
 // ----------------------------------------------------
 // 2. Resolve Database Connection Settings from ENV
 // ----------------------------------------------------
@@ -142,6 +149,24 @@ function getDB(): PDO {
         return $pdoInstance;
     }
 
+    $options = [
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES   => false,
+        PDO::ATTR_TIMEOUT            => 5,
+    ];
+
+    // 1. Supabase Direct Connection (PostgreSQL Pooler)
+    if (class_exists('SupabaseDatabase')) {
+        $supabaseDb = SupabaseDatabase::getInstance();
+        $supabasePdo = $supabaseDb->getPDO();
+        if ($supabasePdo instanceof PDO) {
+            $pdoInstance = $supabasePdo;
+            return $pdoInstance;
+        }
+    }
+
+    // 2. MySQL / MariaDB Connection
     $dsn = sprintf(
         'mysql:host=%s;port=%d;dbname=%s;charset=%s',
         DB_HOST,
@@ -150,21 +175,21 @@ function getDB(): PDO {
         DB_CHARSET
     );
 
-    $options = [
-        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES   => false,
-        PDO::ATTR_TIMEOUT            => 5,
-    ];
-
     try {
         $pdoInstance = new PDO($dsn, DB_USER, DB_PASS, $options);
         return $pdoInstance;
     } catch (\PDOException $e) {
-        error_log(sprintf('[StayFlow DB Error] Failed connecting to MySQL host "%s", DB "%s": %s', DB_HOST, DB_NAME, $e->getMessage()));
+        error_log(sprintf('[StayFlow DB Error] Failed connecting to database host "%s", DB "%s": %s', DB_HOST, DB_NAME, $e->getMessage()));
         // Re-throw cleanly without leaking credentials
         throw new \PDOException("Database connection could not be established to " . htmlspecialchars(DB_HOST) . ". Please check credentials.", (int)$e->getCode());
     }
+}
+
+/**
+ * Returns the SupabaseDatabase instance for direct Supabase operations.
+ */
+function getSupabase(): SupabaseDatabase {
+    return SupabaseDatabase::getInstance();
 }
 
 /**
@@ -273,6 +298,29 @@ if (!class_exists('AuthService')) {
             return '/admin/index.php';
         }
         public static function attemptLogin(string $identifier, string $password): array {
+            // 1. If Supabase Auth is configured, attempt Supabase Auth when email is provided
+            if (function_exists('isSupabaseConfigured') && isSupabaseConfigured() && filter_var($identifier, FILTER_VALIDATE_EMAIL)) {
+                try {
+                    $auth = new SupabaseAuth();
+                    $res = $auth->signIn($identifier, $password);
+                    if ($res['success']) {
+                        $db = getDB();
+                        $stmt = $db->prepare("SELECT * FROM users WHERE email = ? LIMIT 1");
+                        $stmt->execute([$identifier]);
+                        $user = $stmt->fetch();
+                        if ($user) {
+                            $_SESSION['user_id'] = $user['id'];
+                            $_SESSION['user'] = $user;
+                            $_SESSION['user_role_code'] = $user['role_code'] ?? 'admin';
+                            return ['success' => true, 'user' => $user];
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    error_log("[SupabaseAuth Login Notice] " . $e->getMessage());
+                }
+            }
+
+            // 2. Local Database & Password Hash check
             try {
                 $db = getDB();
                 $stmt = $db->prepare("SELECT * FROM users WHERE email = ? OR username = ? OR phone = ? LIMIT 1");

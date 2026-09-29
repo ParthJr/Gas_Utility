@@ -46,7 +46,17 @@ try {
         WHERE is_active = 1 AND status = 'active'
           AND category IN ('property', 'resident', 'billing', 'communication', 'maintenance', 'food', 'security', 'reports', 'saas')
           AND feature_key NOT IN ('audit_security_logs', 'internal_plan_management', 'customer_overrides', 'super_admin', 'platform_overview')
-        ORDER BY FIELD(category, 'property', 'resident', 'billing', 'communication', 'maintenance', 'food', 'security', 'reports', 'saas'), sort_order ASC, id ASC
+        ORDER BY CASE category 
+            WHEN 'property' THEN 1 
+            WHEN 'resident' THEN 2 
+            WHEN 'billing' THEN 3 
+            WHEN 'communication' THEN 4 
+            WHEN 'maintenance' THEN 5 
+            WHEN 'food' THEN 6 
+            WHEN 'security' THEN 7 
+            WHEN 'reports' THEN 8 
+            WHEN 'saas' THEN 9 
+            ELSE 10 END, sort_order ASC, id ASC
     ");
     $features = $stmtFeat->fetchAll(PDO::FETCH_ASSOC);
 
