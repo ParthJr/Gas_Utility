@@ -1,5 +1,5 @@
 <?php
-header("Location: https://freeliancer.us/", true, 301);
+header("Location: /property-management-software-referral-program.php", true, 301);
 exit();
 $page_title = "Referral Program - StayFlow";
 $page_description = "Refer fellow PG owners to StayFlow and earn cash rewards or subscription discounts.";
