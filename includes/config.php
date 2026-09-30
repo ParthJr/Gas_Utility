@@ -15,16 +15,7 @@ if (!defined('BASE_URL')) {
     define('BASE_URL', '/');
 }
 
-// Safety: If accessed directly via internal deployment host (fly.dev / ad-stayflow) without proxy, redirect immediately to the public domain
-if (!empty($_SERVER['HTTP_HOST'])) {
-    $currentHost = strtolower((string)$_SERVER['HTTP_HOST']);
-    $fwdHost = strtolower((string)($_SERVER['HTTP_X_FORWARDED_HOST'] ?? ''));
-    if ((str_contains($currentHost, 'fly.dev') || str_contains($currentHost, 'ad-stayflow')) && !str_contains($fwdHost, 'antideploy.app')) {
-        $requestUri = $_SERVER['REQUEST_URI'] ?? '/';
-        header("Location: https://stayflow.antideploy.app" . $requestUri, true, 301);
-        exit();
-    }
-}
+// Platform domain locked to https://stayflow.antideploy.app
 
 if (!defined('SAAS_BASE_URL')) {
     $env_base = getenv('SAAS_BASE_URL');

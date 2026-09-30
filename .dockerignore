@@ -2,6 +2,7 @@
 .gitignore
 .dockerignore
 *.sql
+!supabase/migrations/*.sql
 .vscode
 .idea
 *.log
